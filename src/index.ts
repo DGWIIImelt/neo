@@ -1,11 +1,9 @@
-const axios = require('axios');
+import axios from 'axios';
 
-class Overhead{
-  constructor(){
-    const action = process.argv[2];
-    const query = process.argv[3];
-    this[action](query);
-  }
+class OverHead{
+  userCoord: [] = [];
+  satCoord: [] = [];
+  distanceAtoB: number = undefined;
 
   search = async(q) => {
     return await axios.get(`http://tle.ivanstanojevic.me/api/tle/${q}`)
@@ -18,15 +16,15 @@ class Overhead{
     })
   }
   
-  getById = async(q) => {
+  getSatById = async(q) => {
     return await axios.get(`http://tle.ivanstanojevic.me/api/tle/${q}`)
     .then((response) => {
       let result = response.data;
-      let line1 = result.line1;
-      let line2 = result.line2;
+      // let line1 = result.line1;
+      // let line2 = result.line2;
 
-      console.log('line1: ', line1)
-      console.log('line2: ', line2)
+      // console.log('line1: ', line1)
+      // console.log('line2: ', line2)
       return result;
     })
 
@@ -36,19 +34,11 @@ class Overhead{
     })
   }
   
-  getByIdWithMath = async(q) => {
-    let address = await this.getAddressViaIP();
-    await axios.get(`http://tle.ivanstanojevic.me/api/tle/${q}/propagate`)
+  getSatByIdWithMath = async(q) => {
+    return await axios.get(`http://tle.ivanstanojevic.me/api/tle/${q}/propagate`)
     .then((response) => {
       let result = response.data;
-      let coords = {
-        lat1: address[0],
-        lat2: result.geodetic.latitude,
-        lon1: address[1],
-        lon2: result.geodetic.longitude 
-      }
-      this.calculateLatLonRadius(coords);
-      // console.log(result, address)
+      return result;
     })
   
     .catch((error) => {
@@ -57,7 +47,7 @@ class Overhead{
     })
   }
 
-  getAddressViaIP = async () => {
+  getUserAddressViaIP = async () => {
     return await axios.get(`https://ipinfo.io?token=18501ce7f07d92`)
     .then((response) => {
       let address = response.data.loc.split(',');
@@ -69,7 +59,7 @@ class Overhead{
     })
   }
 
-  calculateLatLonRadius = (coords) => {
+  calcDistanceFromUser = (coords) => {
     let { lat1, lat2, lon1, lon2 } = coords;
     // haversine formula
     // a = sin²(Δφ/2) + 
@@ -88,10 +78,30 @@ class Overhead{
     const hav = Math.pow(Math.sin(Δφ/2), 2) + Math.cos(φ1) * Math.cos(φ2) * Math.pow(Math.sin(Δλ/2), 2);
     const c = 2 * Math.atan2(Math.sqrt(hav), Math.sqrt(1-hav)); //2 * angle between 2 points
     
-    const d = R * c; // in metres
+    const d = (R * c) / 1000; // in kilometres
 
-    console.log('distance? ', d)
+    return d;
   }
 }
 
-new Overhead();
+(async() => {
+  let OH = new OverHead();
+  let action = process.argv[2];
+  let query = process.argv[3];
+
+  OH.userCoord = await OH.getUserAddressViaIP();
+  OH.satCoord = await OH.getSatByIdWithMath(query);
+
+  if(OH.userCoord.length && OH.satCoord['geodetic']){
+    OH.distanceAtoB = OH.calcDistanceFromUser({
+      lat1: OH.userCoord[0],
+      lat2: OH.satCoord['geodetic'].latitude,
+      lon1: OH.userCoord[1],
+      lon2: OH.satCoord['geodetic'].longitude
+    });
+  }
+
+  // returnVal = OH[action](query);
+  console.log('another way', OH.distanceAtoB)
+})()
+
