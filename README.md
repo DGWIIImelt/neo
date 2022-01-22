@@ -21,13 +21,16 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
     ```
     npm install
     ```
+
   3. Run application: You'll need at least a search query or satellite ID (e.g. 'ISS', '25544U') to get started.
-    1. Directly, with args
+     * Directly, with args
         Actions availabe include ('search', 'getByIdWithMath')
+        
         ```
         node index.js {action} {satelliteID || searchQuery}
         ```
-    2. Via CLI
+
+     * Via CLI
         ```
         npm run start
         ```
