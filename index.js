@@ -8,8 +8,9 @@ class Overhead{
   }
 
   search = async(q) => {
-    return await axios.get(`http://tle.ivanstanojevic.me/api/tle/${q}`)
+    return await axios.get(`https://tle.ivanstanojevic.me/api/tle/${q}`)
     .then((response) => {
+
       return response.data;
     })
     .catch((error) => {
@@ -19,7 +20,7 @@ class Overhead{
   }
   
   getById = async(q) => {
-    return await axios.get(`http://tle.ivanstanojevic.me/api/tle/${q}`)
+    return await axios.get(`https://tle.ivanstanojevic.me/api/tle/${q}`)
     .then((response) => {
       let result = response.data;
       let line1 = result.line1;
@@ -38,7 +39,7 @@ class Overhead{
   
   getByIdWithMath = async(q) => {
     let address = await this.getAddressViaIP();
-    await axios.get(`http://tle.ivanstanojevic.me/api/tle/${q}/propagate`)
+    await axios.get(`https://tle.ivanstanojevic.me/api/tle/${q}/propagate`)
     .then((response) => {
       let result = response.data;
       let coords = {
@@ -52,7 +53,7 @@ class Overhead{
     })
   
     .catch((error) => {
-      console.log('ERROR!!! ', error)
+      console.log('ERROR!!! TLE MATH: ', error)
       return false;
     })
   }
@@ -64,7 +65,7 @@ class Overhead{
       return address;
     })
     .catch((error) => {
-      console.log('ERROR!!! ', error)
+      console.log('ERROR!!! IPINFO: ', error)
       return false;
     })
   }
