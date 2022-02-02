@@ -1,16 +1,23 @@
 {
   "name": "neo",
   "version": "1.0.0",
-  "description": "",
+  "description": "Toy app for tracking Earth orbiting satellites.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "./scripts/cli.sh"
+    "start": "./scripts/cli.sh",
+    "build": "tsc",
+    "build-dev": "tsc -w"
   },
   "keywords": [],
-  "author": "",
+  "author": "Douglas Wright",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.24.0"
+    "axios": "^0.24.0",
+    "dotenv": "^15.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.14",
+    "typescript": "^4.5.5"
   }
 }

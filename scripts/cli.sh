@@ -1,17 +1,14 @@
 #!/usr/bin/env sh
 
 echo "Choose Action:"
-actions=("search" "getById" "getByIdWithMath" "Quit")
+actions=("search" "getDistanceFromMe" "Quit")
 select action in "${actions[@]}"; do
     case $action in
         "search")
             chosenAction="search"
             break;;
-        "getById")
-            chosenAction="getById"
-            break;;
-        "getByIdWithMath")
-            chosenAction="getByIdWithMath"
+        "getDistanceFromMe")
+            chosenAction="getDistanceFromMe"
             break;;
         "Quit")
             echo "User requested exit"
@@ -23,4 +20,4 @@ done
 echo "Query/ID:"
 read query
 
-node index.js $chosenAction $query
+node ./dist/index.js $chosenAction $query
