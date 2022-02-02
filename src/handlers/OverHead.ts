@@ -2,21 +2,19 @@ import { TLEapi } from '../api/tle';
 import { UserAddressApi } from '../api/userAdress';
 
 export class OverHead{
-  action;
+  action: string = '';
+  distanceAtoB: number = undefined;
+
   query: string = '';
   userCoord: [number, number] = [null, null];
   satCoord: [number, number] = [null, null];
   satData;
-  distanceAtoB: number = undefined;
 
   constructor(action, query){
     this.action = action;
     if(query){
       this.query = query;
     }
-    
-        console.log('yolof ' ,query, this.query)
-
   }
 
   setDistance () : void {
