@@ -9,20 +9,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const OverHead_1 = require("./handlers/OverHead");
-(() => __awaiter(void 0, void 0, void 0, function* () {
-    const OH = new OverHead_1.OverHead(process.argv[2], process.argv[3]);
-    switch (OH.action) {
-        case "getDistanceFromMe":
-            yield OH.setSatCoord();
-            yield OH.setUserCoord();
-            OH.setDistance();
-            console.log(`Distance from you to ${OH.query}: ${OH.distanceAtoB}km.`);
-            break;
-        case "search":
-            yield OH.setSatData();
-            console.log(`Satellite data: ${JSON.stringify(OH.satData)}`);
-            break;
+exports.UserAddressApi = void 0;
+const axios_1 = require("axios");
+require('dotenv').config();
+class UserAddress {
+    getUserAddressViaIP() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield axios_1.default.get(`https://ipinfo.io?token=${process.env.address_key}`)
+                .then((response) => {
+                let address = response.data.loc.split(',');
+                return address;
+            })
+                .catch((error) => {
+                console.log('User Address ERROR!!! ', error);
+                return false;
+            });
+        });
     }
-}))();
-//todo build on save?
+}
+exports.UserAddressApi = new UserAddress();
