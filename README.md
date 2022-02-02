@@ -9,6 +9,7 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
   * [IP Info](http://ip-info.io)
 ### JS Libraries
   * [axios](https://axios-http.com/docs/intro)
+  * [tyepscript]()
 
 ## Project Details
 
@@ -23,15 +24,10 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
     ```
 
   3. Run application: You'll need at least a search query or satellite ID (e.g. 'ISS', '25544U') to get started.
-     * Directly, with args
-        Actions availabe include ('search', 'getByIdWithMath')
-        
-        ```
-        node index.js {action} {satelliteID || searchQuery}
-        ```
 
      * Via CLI
         ```
+        npm run build
         npm run start
         ```
 
