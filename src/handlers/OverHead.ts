@@ -3,7 +3,7 @@ import { UserAddressApi } from '../api/userAdress';
 
 export class OverHead{
   action;
-  query;
+  query: string = '';
   userCoord: [number, number] = [null, null];
   satCoord: [number, number] = [null, null];
   satData;
@@ -11,7 +11,12 @@ export class OverHead{
 
   constructor(action, query){
     this.action = action;
-    this.query = query
+    if(query){
+      this.query = query;
+    }
+    
+        console.log('yolof ' ,query, this.query)
+
   }
 
   setDistance () : void {
