@@ -4,13 +4,12 @@ import { UserAddressApi } from '../api/userAdress';
 export class OverHead{
   action: string = '';
   distanceAtoB: number = undefined;
-
   query: string = '';
   userCoord: [number, number] = [null, null];
   satCoord: [number, number] = [null, null];
   satData;
 
-  constructor(action, query){
+  constructor(action: string, query: string){
     this.action = action;
     if(query){
       this.query = query;
@@ -18,10 +17,18 @@ export class OverHead{
   }
 
   setDistance () : void {
-    const lat1 = this.userCoord[0];
-    const lat2 = this.satCoord[0];
-    const lon1 = this.userCoord[1];
-    const lon2 = this.satCoord[1];
+    if(this.userCoord === undefined || this.satCoord === undefined){
+      return;
+    }
+  
+    const lat1: number = this.userCoord[0];
+    const lat2: number = this.satCoord[0];
+    const lon1: number = this.userCoord[1];
+    const lon2: number = this.satCoord[1];
+    
+    if(lat1 === null || lat2 === null || lon1 === null || lon2 === null){
+      return;
+    }
     // haversine formula
     // a = sin²(Δφ/2) + 
     //     cos φ1 ⋅ cos φ2 ⋅ 
@@ -43,11 +50,19 @@ export class OverHead{
   }
 
   async setSatData () : Promise<void> {
-    this.satData = await TLEapi.search(this.query)
+    this.satData = await TLEapi.search(this.query);
   }
 
   async setSatCoord () : Promise<void> {
-    this.satCoord = await TLEapi.getSatLatLon(this.query);
+    if(this.query){
+      this.satCoord = await TLEapi.getSatLatLon(this.query);
+    }
+  }
+
+  async setSatPropagate () : Promise<void> {
+    if(this.query){
+      this.satData = await TLEapi.getSatPropagate(this.query);
+    }
   }
 
   async setUserCoord () : Promise<void> {
