@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 echo "Choose Action:"
-actions=("search" "getSatPropagate" "getDistanceFromMe" "Quit")
+actions=("search" "getSatPropagate" "test" "getDistanceFromMe" "Quit")
 select action in "${actions[@]}"; do
     case $action in
         "search")
@@ -13,6 +13,9 @@ select action in "${actions[@]}"; do
         "getDistanceFromMe")
             chosenAction="getDistanceFromMe"
             break;;
+        "test")
+            chosenAction="test"
+            break;;
         "Quit")
             echo "User requested exit"
             exit;;
@@ -23,7 +26,7 @@ done
 echo "Query/ID:"
 read query
 
-if [[ ( $chosenAction = "getSatPropagate" || $chosenAction = "getDistanceFromMe" ) && $query = "" ]]; then
+if [[ ( $chosenAction = "getSatPropagate" || $chosenAction = "test" || $chosenAction = "getDistanceFromMe" ) && $query = "" ]]; then
   while [[ $query = "" ]]
   do
     echo "Query/ID is required for this action:"

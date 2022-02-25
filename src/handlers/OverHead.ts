@@ -1,12 +1,12 @@
 import { TLEapi } from '../api/tle';
 import { UserAddressApi } from '../api/userAdress';
-
+const satellite = require('satellite.js');
 export class OverHead{
   action: string = '';
   distanceAtoB: number = undefined;
   query: string = '';
-  userCoord: [number, number] = [null, null];
-  satCoord: [number, number] = [null, null];
+  userCoord: number[] = [null, null];
+  satCoord: number[] = [null, null];
   satData;
 
   constructor(action: string, query: string){
@@ -25,7 +25,7 @@ export class OverHead{
     const lat2: number = this.satCoord[0];
     const lon1: number = this.userCoord[1];
     const lon2: number = this.satCoord[1];
-    
+
     if(lat1 === null || lat2 === null || lon1 === null || lon2 === null){
       return;
     }
@@ -38,7 +38,7 @@ export class OverHead{
 
     const R = 6371e3; // earth radius in metres, an average acutally between 6356.75km @ poles & 6378.14 @ equator
     // degrees = (π/180) * radians || φ, λ converts degrees to radians, used below 
-    const φ1 = lat1 * Math.PI/180; 
+    const φ1 = lat1 * Math.PI/180;
     const φ2 = lat2 * Math.PI/180;
     const Δφ = (lat2-lat1) * Math.PI/180;
     const Δλ = (lon2-lon1) * Math.PI/180;
@@ -67,5 +67,30 @@ export class OverHead{
 
   async setUserCoord () : Promise<void> {
     this.userCoord = await UserAddressApi.getUserAddressViaIP();
+  }
+
+  test(){
+    const { line1, line2 } = this.satData;
+    const satrec = satellite.twoline2satrec(line1, line2);
+    const now = new Date();
+    const gmst = satellite.gstime(now);
+
+    // Propagate satellite using time in JavaScript Date and pull position and velocity out (a key-value pair of ECI coordinates).
+    // These are the base results from which all other coordinates are derived.
+    // https://en.wikipedia.org/wiki/Earth-centered_inertial
+    // const { position, velocity } = satellite.propagate(satrec, now); will need velocity if i want to predict where/when the satellite arrives
+    const { position } = satellite.propagate(satrec, now);
+    // Get satellites ground based position, in Radians
+    const positionGd = satellite.eciToGeodetic(position, gmst);
+    const satelliteGround = {
+      latitude: positionGd.latitude,
+      longitude: positionGd.longitude,
+      height: positionGd.height
+    };
+
+    this.satCoord = [
+      satellite.degreesLat(satelliteGround.latitude), 
+      satellite.degreesLong(satelliteGround.longitude)
+    ];
   }
 }
