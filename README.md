@@ -10,6 +10,7 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
 ### JS Libraries
   * [axios](https://axios-http.com/docs/intro)
   * [tyepscript]()
+  * [satellite.js]()
 
 ## Project Details
 
@@ -23,7 +24,7 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
     npm install
     ```
 
-  3. Run application: You'll need at least a search query or satellite ID (e.g. 'ISS', '25544U') to get started.
+  3. Run application: You'll need at least a search query or satellite ID (e.g. 'ISS', '25544U') to get started, or you'll receive a random 20 satellites.
 
      * Via CLI
         ```
@@ -49,6 +50,7 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
   * visualize full orbital path of chosen satellite
   * pass in location as an argument in lieu/addition to IP location lookup
   * swap out propagate endpoint for library or hombebrew implementation of SGP4/SDP4 algorithm
+  * warning text/tweet/email when a satellite is to be overhead
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details

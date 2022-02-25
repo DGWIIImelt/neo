@@ -7,8 +7,8 @@ class TLE{
       return response.data;
     })
     .catch((error) => {
-      console.log('TLE ERROR!!! ', error)
-      return false;
+      console.log('TLE ERROR!!! ', error.response.status)
+      return;
     })
   }
 
@@ -23,8 +23,20 @@ class TLE{
     })
 
     .catch((error) => {
-      console.log('TLE ERROR!!! ', error)
-      return false;
+      console.log('TLE ERROR!!! ', error.response.status)
+      return;
+    })
+  }
+
+  async getSatPropagate (q) : Promise<any> {
+    return await axios.get(`http://tle.ivanstanojevic.me/api/tle/${q}/propagate`)
+    .then((response) => {
+      return response.data;
+    })
+
+    .catch((error) => {
+      console.log('TLE ERROR!!! ', error.response.status)
+      return;
     })
   }
 }
