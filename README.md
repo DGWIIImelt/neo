@@ -6,7 +6,7 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
 
 ### Server-side APIs
   * [TLE/Two Line Element](https://tle.ivanstanojevic.me/#/)
-  * [IP Info](http://ip-info.io)
+  * [IP Info](http://ipinfo.io)
 ### JS Libraries
   * [axios](https://axios-http.com/docs/intro)
   * [tyepscript]()
@@ -15,7 +15,7 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
 ## Project Details
 
 ## Installation & Getting Started Locally
-  1. Clone from the [Repo](TBD): 
+  1. Clone from the [Repo](https://github.com/DGWIIImelt/neo.git):
     ```
     git clone TBD
     ```
@@ -23,8 +23,14 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
     ```
     npm install
     ```
-
-  3. Run application: You'll need at least a search query or satellite ID (e.g. 'ISS', '25544U') to get started, or you'll receive a random 20 satellites.
+  3. Setup ipinfo API:
+     * Create API key @ https://ipinfo.io/
+     * Create .env file to root
+     * Add API key to .env file as follows:
+        ```
+        address_key=YOUR_KEY_GOES_HERE
+        ```
+  4. Run application: You'll need at least a search query or satellite ID (e.g. 'ISS', '25544U') to get started, or you'll receive a random 20 satellites.
 
      * Via CLI
         ```
@@ -36,11 +42,11 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
   * [Doug Wright](https://github.com/Spazcool)
 
 ## Outisde Sources
-   * [TLE API](https://tle.ivanstanojevic.me/api/tle/{id}/propagate)
-   * [Haversine Formula wiki](https://en.wikipedia.org/wiki/Haversine_formula)
-   * [FreeMapTools](https://www.freemaptools.com/measure-distance.htm)
-   * [N2YO Satellite Tracker](https://www.n2yo.com/satellite/?s=25544#results)
-   * [MovableType Blog](https://www.movable-type.co.uk/scripts/latlong.html)
+  * [TLE API](https://tle.ivanstanojevic.me/api/tle/{id}/propagate)
+  * [Haversine Formula wiki](https://en.wikipedia.org/wiki/Haversine_formula)
+  * [FreeMapTools](https://www.freemaptools.com/measure-distance.htm)
+  * [N2YO Satellite Tracker](https://www.n2yo.com/satellite/?s=25544#results)
+  * [MovableType Blog](https://www.movable-type.co.uk/scripts/latlong.html)
 
 ## Future Plans
   * calculate full orbital path of chosen satellite
@@ -48,9 +54,11 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
   * check if gonna be overhead in 24 hrs
   * warning about what is overhead in the next 24 hours, (need to calculate all satellites trajectory or at least filter out the unlikelys)
   * visualize full orbital path of chosen satellite
-  * pass in location as an argument in lieu/addition to IP location lookup
-  * swap out propagate endpoint for library or hombebrew implementation of SGP4/SDP4 algorithm
+  * pass in location as an argument in lieu/addition to IP location lookup (would save an api call)
+  * ~~swap out propagate endpoint for library or hombebrew implementation of SGP4/SDP4 algorithm~~
   * warning text/tweet/email when a satellite is to be overhead
+  * input/output validation for query/action
+  * add testing
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details

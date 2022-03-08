@@ -69,17 +69,21 @@ export class OverHead{
     this.userCoord = await UserAddressApi.getUserAddressViaIP();
   }
 
-  test(){
+  setSatCoordLocal(hourOffset: number = 0){
     const { line1, line2 } = this.satData;
     const satrec = satellite.twoline2satrec(line1, line2);
-    const now = new Date();
+    const now : Date = new Date();
+    now.setTime(now.getTime() + (hourOffset*60*60*1000));
     const gmst = satellite.gstime(now);
 
     // Propagate satellite using time in JavaScript Date and pull position and velocity out (a key-value pair of ECI coordinates).
     // These are the base results from which all other coordinates are derived.
     // https://en.wikipedia.org/wiki/Earth-centered_inertial
     // const { position, velocity } = satellite.propagate(satrec, now); will need velocity if i want to predict where/when the satellite arrives
-    const { position } = satellite.propagate(satrec, now);
+
+    const thing  = satellite.propagate(satrec, now);
+    const { position } = thing;
+    console.log(thing)
     // Get satellites ground based position, in Radians
     const positionGd = satellite.eciToGeodetic(position, gmst);
     const satelliteGround = {
@@ -92,5 +96,6 @@ export class OverHead{
       satellite.degreesLat(satelliteGround.latitude), 
       satellite.degreesLong(satelliteGround.longitude)
     ];
+
   }
 }
