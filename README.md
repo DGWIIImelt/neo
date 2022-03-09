@@ -10,7 +10,7 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
 ### JS Libraries
   * [axios](https://axios-http.com/docs/intro)
   * [tyepscript]()
-  * [satellite.js]()
+  * [satellite.js](https://www.npmjs.com/package/satellite.js)
 
 ## Project Details
 
@@ -49,7 +49,7 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
   * [MovableType Blog](https://www.movable-type.co.uk/scripts/latlong.html)
 
 ## Future Plans
-  * calculate full orbital path of chosen satellite
+  * ~~calculate full orbital path of chosen satellite~~
   * check if chosen satellite is overhead now
   * check if gonna be overhead in 24 hrs
   * warning about what is overhead in the next 24 hours, (need to calculate all satellites trajectory or at least filter out the unlikelys)
