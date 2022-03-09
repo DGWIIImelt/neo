@@ -27,17 +27,19 @@ import { OverHead } from './handlers/OverHead';
       break;
       
     case "getOrbit":
-      let coords : object[] = [];
       await OH.setSatData();
-      // todo need to calculate the orbital period?
-      for(let i : number = 0; i < 175; i += 25){ // looping quarter of an hour to 90 mins, the orbital period of ISS
+      const coords : object[] = [];
+      const line2parts : string[] = OH.satData.line2.split(' ');
+      const meanMotion : number = parseFloat(line2parts[line2parts.length - 1]);
+      const orbitalPeriodHrs : number = (24 / meanMotion) * 100;
+
+      for(let i : number = 0; i < orbitalPeriodHrs; i += 25){ // looping 1/4hr of orbital period
         const offset : number = i/100;
         OH.setSatCoordLocal(offset);
         coords.push({lat: OH.satCoord[0], long: OH.satCoord[1], offset });
       }
 
-      console.log('cords', coords)
-      console.log(OH.satData)
+      console.log('orbital period (hrs): ', orbitalPeriodHrs, 'cords: ', coords)
 
       // todo create a line out of htose coords and check distance to user coords to see if within  a set distance
 

@@ -81,9 +81,8 @@ export class OverHead{
     // https://en.wikipedia.org/wiki/Earth-centered_inertial
     // const { position, velocity } = satellite.propagate(satrec, now); will need velocity if i want to predict where/when the satellite arrives
 
-    const thing  = satellite.propagate(satrec, now);
-    const { position } = thing;
-    console.log(thing)
+    const { position } = satellite.propagate(satrec, now);
+    // console.log(satrec)
     // Get satellites ground based position, in Radians
     const positionGd = satellite.eciToGeodetic(position, gmst);
     const satelliteGround = {
