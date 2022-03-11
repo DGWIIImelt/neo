@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 echo "Choose Action:"
-actions=("search" "getSatPropagate" "getOrbit" "getOrbits24hrs" "getNearMe24hrs" "getDistanceFromMe" "Quit")
+actions=("search" "getSatPropagate" "getOrbit" "getOrbits24hrs" "getNearMe24hrs" "getDistanceFromMe" "test" "Quit")
 select action in "${actions[@]}"; do
     case $action in
         "search")
@@ -21,6 +21,9 @@ select action in "${actions[@]}"; do
             break;;
         "getNearMe24hrs")
             chosenAction="getNearMe24hrs"
+            break;;
+        "test")
+            chosenAction="test"
             break;;
         "Quit")
             echo "User requested exit"

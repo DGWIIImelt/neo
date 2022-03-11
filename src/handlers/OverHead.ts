@@ -16,15 +16,16 @@ export class OverHead{
     }
   }
 
-  setDistance () : void {
+  setDistance (A?, B?) : void {
     if(this.userCoord === undefined || this.satCoord === undefined){
       return;
     }
-  
-    const lat1: number = this.userCoord[0];
-    const lat2: number = this.satCoord[0];
-    const lon1: number = this.userCoord[1];
-    const lon2: number = this.satCoord[1];
+
+    let outsideVars: boolean = (A !== undefined && B !== undefined);
+    let lat1: number = (outsideVars ? A : this.userCoord)[0];
+    let lat2: number = (outsideVars ? B : this.satCoord)[0];
+    let lon1: number = (outsideVars ? A : this.userCoord)[1];
+    let lon2: number = (outsideVars ? B : this.satCoord)[1];
 
     if(lat1 === null || lat2 === null || lon1 === null || lon2 === null){
       return;

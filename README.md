@@ -59,6 +59,11 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
   * warning text/tweet/email when a satellite is to be overhead
   * input/output validation for query/action
   * add testing
+  * multiple users
+  * running all the satellites data, storing it for 3 days to
+  * satellite orbits that will pass 'overhead' in the next 24hrs || the next viewing time || the next 10
+  * using mongo to query geospatial data to with in the users location
+  * calculate horizon of user, and horizon of satellite, if they intersect then its a worthy candidate
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
