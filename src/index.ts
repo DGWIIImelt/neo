@@ -84,6 +84,7 @@ const testData = require('../data/test.json');
       // todo if satellite is 100 miles from viewer OR if satellite is viewable, taking into account horizon https://en.wikipedia.org/wiki/Horizon
       break;
 
+    // trying to find the closest point on an orbital path to the user
     case "test":
       const { features } = testData;
       const testUserCoord = features.find((el: object) => el['label'] == 'user').geometry.coordinates;
@@ -123,31 +124,36 @@ const testData = require('../data/test.json');
         OH.satCoord = el;
         OH.setDistance();
         distances.push({distance: OH.distanceAtoB, order: index, coords: OH.satCoord});
-      })
-        
+      });
+
       distances.sort((a: object, b:object) => a['distance'] - b['distance']);
 
       const { SC1, SC2 } = setSCs(distances);
-      OH.setDistance(SC1.coords, SC2.coords);
+      OH.setDistance(SC1['coords'], SC2['coords']);
       const SC1toSC2dist = OH.distanceAtoB;
 
-      triangle['U'].coords = OH.userCoord;
-      triangle['U'].distance.SC1 = SC1['distance'];
-      triangle['U'].distance.SC2 = SC2['distance'];
+      triangle['U']['coords'] = OH.userCoord;
+      triangle['U']['distance'].SC1 = SC1['distance'];
+      triangle['U']['distance'].SC2 = SC2['distance'];
 
-      triangle['SC1'].coords = SC1.coords;
-      triangle['SC1'].distance.U = SC1.distance;
-      triangle['SC1'].distance.SC2 = SC1toSC2dist;
+      triangle['SC1']['coords'] = SC1['coords'];
+      triangle['SC1']['distance'].U = SC1['distance'];
+      triangle['SC1']['distance'].SC2 = SC1toSC2dist;
 
-      triangle['SC2'].coords = SC2.coords;
-      triangle['SC2'].distance.U = SC2.distance;
-      triangle['SC2'].distance.SC1 = SC1toSC2dist;
+      triangle['SC2']['coords'] = SC2['coords'];
+      triangle['SC2']['distance'].U = SC2['distance'];
+      triangle['SC2']['distance'].SC1 = SC1toSC2dist;
 
+      triangle['U']['angle'] = setAngle(triangle['SC1']['distance'].SC2, triangle['SC1']['distance'].U, triangle['SC2']['distance'].U);
+      triangle['SC1']['angle'] = setAngle(triangle['SC2']['distance'].U, triangle['SC1']['distance'].U, triangle['SC2']['distance'].SC1);
+      triangle['SC2']['angle'] = setAngle(triangle['SC1']['distance'].U, triangle['SC2']['distance'].U, triangle['SC2']['distance'].SC1);
+
+      // ---------------------------- MATH ATTEMPT BELOW, PRESUMING FLAT SURFACE ----------------------------
+      // Calculate angles
 
       console.log(triangle)
-    // var obj = JSON.parse(fs.readFileSync('file', 'utf8'));
-
-      // OH.userCoord
+      let thingy = setAngle(8, 5, 10);
+      // console.log(thingy)
       break;
 
     case "getSatPropagate":
@@ -164,21 +170,30 @@ const testData = require('../data/test.json');
   }
 })()
 
-function setSCs(SCs) {
+function setSCs(SCs: object[]){
   // presumes an array of coords sorted by thier proximity to the user coord
-  const SC1 = SCs[0];
-  let SC2;
+  const SC1 : object = SCs[0];
+  let SC2 : object;
 
   // trying to avoid overflowing the array
-  if(SC1.order === 0){
-    SC2 = SCs.find((el) => el.order == 1);
-  }else if(SC1.order === SCs.length - 1){
-    SC2 = SCs.find((el) => el.order == SC1.order - 1);
+  if(SC1['order'] === 0){
+    SC2 = SCs.find((el) => el['order'] == 1);
+  }else if(SC1['order'] === SCs.length - 1){
+    SC2 = SCs.find((el) => el['order'] == SC1['order'] - 1);
   }else{
-    console.log(3)
-
-    SC2 = SCs.find((el) => el.order == SC1.order + 1);
+    SC2 = SCs.find((el) => el['order'] == SC1['order'] + 1);
   }
 
   return {SC1, SC2};
+}
+
+function setAngle(A: number, B: number, C: number): number {
+  let a = Math.pow(A, 2)
+  let b = Math.pow(B, 2)
+  let c = Math.pow(C, 2)
+  let sides = (a - b - c)
+console.log(A, B, C, a, b, c, sides)
+  const angRad = Math.acos(sides)/(-2 * B * C);
+  const angDeg = angRad * Math.PI/180;
+  return angDeg;
 }

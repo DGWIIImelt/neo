@@ -16,7 +16,7 @@ export class OverHead{
     }
   }
 
-  setDistance (A?, B?) : void {
+  setDistance (A? : [], B? : []) : void {
     if(this.userCoord === undefined || this.satCoord === undefined){
       return;
     }
