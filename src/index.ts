@@ -144,16 +144,16 @@ const testData = require('../data/test.json');
       triangle['SC2']['distance'].U = SC2['distance'];
       triangle['SC2']['distance'].SC1 = SC1toSC2dist;
 
-      triangle['U']['angle'] = setAngle(triangle['SC1']['distance'].SC2, triangle['SC1']['distance'].U, triangle['SC2']['distance'].U);
-      triangle['SC1']['angle'] = setAngle(triangle['SC2']['distance'].U, triangle['SC1']['distance'].U, triangle['SC2']['distance'].SC1);
-      triangle['SC2']['angle'] = setAngle(triangle['SC1']['distance'].U, triangle['SC2']['distance'].U, triangle['SC2']['distance'].SC1);
+      triangle['U']['angle'] = setAngleEuclidean(triangle['SC1']['distance'].SC2, triangle['SC1']['distance'].U, triangle['SC2']['distance'].U);
+      triangle['SC1']['angle'] = setAngleEuclidean(triangle['SC2']['distance'].U, triangle['SC1']['distance'].U, triangle['SC2']['distance'].SC1);
+      triangle['SC2']['angle'] = setAngleEuclidean(triangle['SC1']['distance'].U, triangle['SC2']['distance'].U, triangle['SC2']['distance'].SC1);
 
       // ---------------------------- MATH ATTEMPT BELOW, PRESUMING FLAT SURFACE ----------------------------
       // Calculate angles
 
       console.log(triangle)
-      let thingy = setAngle(8, 5, 10);
-      // console.log(thingy)
+      // let thingy = setAngleEuclidean(8, 5, 10); // TEST equals 52.41 https://www.youtube.com/watch?v=COMiK1L0Oj8
+      // console.log('Thingy: ', thingy)
       break;
 
     case "getSatPropagate":
@@ -187,13 +187,13 @@ function setSCs(SCs: object[]){
   return {SC1, SC2};
 }
 
-function setAngle(A: number, B: number, C: number): number {
-  let a = Math.pow(A, 2)
-  let b = Math.pow(B, 2)
-  let c = Math.pow(C, 2)
-  let sides = (a - b - c)
-console.log(A, B, C, a, b, c, sides)
-  const angRad = Math.acos(sides)/(-2 * B * C);
-  const angDeg = angRad * Math.PI/180;
+function setAngleEuclidean(A: number, B: number, C: number): number {
+  const sides : number = Math.pow(A, 2) - Math.pow(B, 2) - Math.pow(C, 2);
+  const angRad : number = Math.acos(sides / (-2 * B * C));
+  const angDeg : number = angRad * 180 / Math.PI; // rad > deg
+
   return angDeg;
 }
+
+//TODO
+function setAngleElliptical():number{return 0;}
