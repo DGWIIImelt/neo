@@ -128,7 +128,7 @@ const testData = require('../data/test.json');
 
       distances.sort((a: object, b:object) => a['distance'] - b['distance']);
 
-      const { SC1, SC2 } = setSCs(distances);
+      const { SC1, SC2 } = setSatOrbitCoords(distances);
       OH.setDistance(SC1['coords'], SC2['coords']);
       const SC1toSC2dist = OH.distanceAtoB;
 
@@ -170,7 +170,7 @@ const testData = require('../data/test.json');
   }
 })()
 
-function setSCs(SCs: object[]){
+function setSatOrbitCoords(SCs: object[]){
   // presumes an array of coords sorted by thier proximity to the user coord
   const SC1 : object = SCs[0];
   let SC2 : object;
@@ -188,6 +188,7 @@ function setSCs(SCs: object[]){
 }
 
 function setAngleEuclidean(A: number, B: number, C: number): number {
+  // sets angles of a triangle based on side lengths, presumes a flat surface so might not be accurate enough for this task
   const sides : number = Math.pow(A, 2) - Math.pow(B, 2) - Math.pow(C, 2);
   const angRad : number = Math.acos(sides / (-2 * B * C));
   const angDeg : number = angRad * 180 / Math.PI; // rad > deg
@@ -196,4 +197,22 @@ function setAngleEuclidean(A: number, B: number, C: number): number {
 }
 
 //TODO
-function setAngleElliptical():number{return 0;}
+function setClosestCoordInOrbit(triangle): {lat: number, long: number} {
+  // cicumference of Earth 40075km
+  // take first sat coord, user coord, 
+  // calculate second with distance from user to first coord, distance from first coord to second
+  // make triangle with first to la
+
+  // OR
+  // calculate all points in a circle around the earth, following the path of the orbit
+  // binary search it, checking if distance from a point on the circle is greater/lesser than a previous one to the user coords, using haversine each time
+
+  // OR
+  // http://www.movable-type.co.uk/scripts/latlong-vectors.html#:~:text=source%20code%20below.-,Cross%2Dtrack%20distance,-The%20cross%2Dtrack
+  return {lat: 0, long: 0};
+}
+
+//TODO
+function setAngleElliptical(): number {
+  return 0;
+}
