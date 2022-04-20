@@ -11,6 +11,7 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
   * [axios](https://axios-http.com/docs/intro)
   * [tyepscript]()
   * [satellite.js](https://www.npmjs.com/package/satellite.js)
+  * [geodesy](https://www.npmjs.com/package/geodesy)
 
 ## Project Details
 
