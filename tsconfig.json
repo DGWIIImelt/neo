@@ -5,11 +5,15 @@
     "declaration": false,
     "experimentalDecorators": true,
     "lib": [
-      "es2015",
+      "ES2015",
+      "ES6",
     ],
     "moduleResolution": "node",
     "module": "commonjs",
+    // "esModuleInterop": true,
     "target": "es6",
+    // "allowJs": true,
+    // "skipLibCheck": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "outDir": "dist"

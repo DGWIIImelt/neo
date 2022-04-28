@@ -115,8 +115,10 @@ export interface triangle {
     case "test":
       // trying to find the closest point on an orbital path to the user
       const data = setTestData(testData.features);
-      console.log(data)
-      // const euclideanTriangle = setEuclideanTriangle(data); // works for flat surfaces or short distances on a curved surface
+      // console.log(data)
+      
+      const euclideanTriangle : triangle = setEuclideanTriangle(data); // works for flat surfaces or short distances on a curved surface
+      OH.setClosestCoordInOrbit(euclideanTriangle)
       // const ellipticalTriangle = setElliptialTriangle(data);
       // todo
       // using data const above find the point on the orbit that is closest to the user, not the closest set of satCoords but a new coord that falls on the orbital path
@@ -158,56 +160,56 @@ export interface triangle {
 
   // }
 
-  // function setEuclideanTriangle (distances: object[]) : triangle {
-  //   distances.sort((a: object, b:object) => a['distance'] - b['distance']);
+  function setEuclideanTriangle (distances: object[]) : triangle {
+    distances.sort((a: object, b:object) => a['distance'] - b['distance']);
 
-  //   const { SC1, SC2 } = OH.setSatOrbitCoords(distances);
-  //   OH.setDistance(SC1['coords'], SC2['coords']);
-  //   const SC1toSC2dist = OH.distanceAtoB;
+    const { SC1, SC2 } = OH.setSatOrbitCoords(distances);
+    OH.setDistance(SC1['coords'], SC2['coords']);
+    const SC1toSC2dist = OH.distanceAtoB;
 
-  //   let triangle : triangle = {
-  //     UserCoord:{
-  //       coords: OH.userCoord,
-  //       angle: undefined,
-  //       distance: {
-  //         SatCoord1: SC1['distance'],
-  //         SatCoord2: SC2['distance']
-  //       }
-  //     },
-  //     SatCoord1:{
-  //       coords: SC1['coords'],
-  //       angle: undefined,
-  //       distance: {
-  //         UserCoord: SC1['distance'],
-  //         SatCoord2: SC1toSC2dist
-  //       }
-  //     },
-  //     SatCoord2:{
-  //       coords: SC2['coords'],
-  //       angle: undefined,
-  //       distance: {
-  //         SatCoord1: SC1toSC2dist,
-  //         UserCoord: SC2['distance']
-  //       }
-  //     }
-  //   };
+    let triangle : triangle = {
+      UserCoord:{
+        coords: OH.userCoord,
+        angle: undefined,
+        distance: {
+          SatCoord1: SC1['distance'],
+          SatCoord2: SC2['distance']
+        }
+      },
+      SatCoord1:{
+        coords: SC1['coords'],
+        angle: undefined,
+        distance: {
+          UserCoord: SC1['distance'],
+          SatCoord2: SC1toSC2dist
+        }
+      },
+      SatCoord2:{
+        coords: SC2['coords'],
+        angle: undefined,
+        distance: {
+          SatCoord1: SC1toSC2dist,
+          UserCoord: SC2['distance']
+        }
+      }
+    };
 
-  //   triangle.UserCoord.angle = OH.setAngleEuclidean(
-  //     triangle.SatCoord1.distance.SatCoord2,
-  //     triangle.SatCoord1.distance.UserCoord,
-  //     triangle.SatCoord2.distance.UserCoord
-  //   );
-  //   triangle.SatCoord1.angle = OH.setAngleEuclidean(
-  //     triangle.SatCoord2.distance.UserCoord,
-  //     triangle.SatCoord1.distance.UserCoord,
-  //     triangle.SatCoord2.distance.SatCoord1
-  //   );
-  //   triangle.SatCoord2.angle = OH.setAngleEuclidean(
-  //     triangle.SatCoord1.distance.UserCoord,
-  //     triangle.SatCoord2.distance.UserCoord,
-  //     triangle.SatCoord2.distance.SatCoord1
-  //   );
+    triangle.UserCoord.angle = OH.setAngleEuclidean(
+      triangle.SatCoord1.distance.SatCoord2,
+      triangle.SatCoord1.distance.UserCoord,
+      triangle.SatCoord2.distance.UserCoord
+    );
+    triangle.SatCoord1.angle = OH.setAngleEuclidean(
+      triangle.SatCoord2.distance.UserCoord,
+      triangle.SatCoord1.distance.UserCoord,
+      triangle.SatCoord2.distance.SatCoord1
+    );
+    triangle.SatCoord2.angle = OH.setAngleEuclidean(
+      triangle.SatCoord1.distance.UserCoord,
+      triangle.SatCoord2.distance.UserCoord,
+      triangle.SatCoord2.distance.SatCoord1
+    );
 
-  //   return triangle;
-  // }
+    return triangle;
+  }
 })()

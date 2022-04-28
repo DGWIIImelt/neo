@@ -1,8 +1,17 @@
 import { TLEapi } from '../api/tle';
 import { UserAddressApi } from '../api/userAdress';
-// import LatLon, { Nvector, Dms } from 'geodesy/latlon-nvector-spherical.js';
+
+//https://github.com/chrisveness/geodesy/issues/79
+// was working with node v 7.0.0 geodesy v1.1.3
+// const LatLon = require('geodesy/latlon-spherical.js');
+
+import LatLon from 'geodesy/latlon-spherical.js';
+
+// const LatLon = require('geodesy/latlon-spherical.js')
+// const Nvector = require('geodesy/latlon-spherical.js');
+// const Dms = require('geodesy/latlon-spherical.js');
 const satellite = require('satellite.js');
-// import { triangle } from '../index';
+import { triangle } from '../index';
 export class OverHead {
   action: string = '';
   distanceAtoB: number = undefined; //used both for distance between user and sat as well as distnace between the same sat over a period of time
@@ -137,8 +146,18 @@ export class OverHead {
   }
 
   //TODO
-  // setClosestCoordInOrbit (triangle: triangle): {lat: number, long: number} {
-    // console.log(triangle)
+  setClosestCoordInOrbit (triangle: triangle): {lat: number, long: number} {
+    let thingy = new LatLon(43.1888, -70.8868);
+    const p1 = new LatLon(52.205, 0.119);
+const p2 = new LatLon(48.857, 2.351);
+const d = p1.distanceTo(p2); // 404.3×10³ m
+    console.log('setClosestCoordInOrbit')
+    console.log('triange')
+    console.log(triangle.UserCoord.coords)
+    console.log('lat, vec,dms')
+    console.log(d, thingy )
+    console.log()
+    // console.log( Dms)
     // cicumference of Earth 40075km
     // take first sat coord, user coord, 
     // calculate second with distance from user to first coord, distance from first coord to second
@@ -150,8 +169,8 @@ export class OverHead {
 
     // OR
     // http://www.movable-type.co.uk/scripts/latlong-vectors.html#:~:text=source%20code%20below.-,Cross%2Dtrack%20distance,-The%20cross%2Dtrack
-  //   return {lat: 0, long: 0};
-  // }
+    return {lat: 0, long: 0};
+  }
 
   //TODO
   setAngleElliptical (): number {
