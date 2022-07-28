@@ -1,5 +1,5 @@
 import { OverHead } from './handlers/OverHead';
-const testData = require('../data/test.json');
+import * as testData from './data/test.json';
 
 export interface triangle {
   UserCoord:{
@@ -118,10 +118,13 @@ export interface triangle {
       // console.log(data)
       
       const euclideanTriangle : triangle = setEuclideanTriangle(data); // works for flat surfaces or short distances on a curved surface
-      OH.setClosestCoordInOrbit(euclideanTriangle)
+      // console.log(euclideanTriangle);
+      OH.setClosestCoordInOrbit(euclideanTriangle);
       // const ellipticalTriangle = setElliptialTriangle(data);
       // todo
       // using data const above find the point on the orbit that is closest to the user, not the closest set of satCoords but a new coord that falls on the orbital path
+
+      console.log('final: ', OH.findClosestPointAlongGeodesic(), 'distance: ', OH.distanceAtoB);
       break;
 
     case "getSatPropagate":

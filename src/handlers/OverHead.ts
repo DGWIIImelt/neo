@@ -1,17 +1,9 @@
 import { TLEapi } from '../api/tle';
 import { UserAddressApi } from '../api/userAdress';
-
-//https://github.com/chrisveness/geodesy/issues/79
-// was working with node v 7.0.0 geodesy v1.1.3
-// const LatLon = require('geodesy/latlon-spherical.js');
-
-import LatLon from 'geodesy/latlon-spherical.js';
-
-// const LatLon = require('geodesy/latlon-spherical.js')
-// const Nvector = require('geodesy/latlon-spherical.js');
-// const Dms = require('geodesy/latlon-spherical.js');
-const satellite = require('satellite.js');
+import { LatLon } from './geodesy/latlon-spherical';
 import { triangle } from '../index';
+
+const satellite = require('satellite.js');
 export class OverHead {
   action: string = '';
   distanceAtoB: number = undefined; //used both for distance between user and sat as well as distnace between the same sat over a period of time
@@ -117,6 +109,7 @@ export class OverHead {
   }
 
   setSatOrbitCoords (SCs: object[]) {
+    // grab the two nearest coords presently caclculated
     // presumes an array of coords sorted by thier proximity to the user coord returns the closest SC1 and a coord next to the closest
     const SC1 : object = SCs[0];
     let SC2 : object;
@@ -147,17 +140,17 @@ export class OverHead {
 
   //TODO
   setClosestCoordInOrbit (triangle: triangle): {lat: number, long: number} {
-    let thingy = new LatLon(43.1888, -70.8868);
-    const p1 = new LatLon(52.205, 0.119);
-const p2 = new LatLon(48.857, 2.351);
-const d = p1.distanceTo(p2); // 404.3×10³ m
-    console.log('setClosestCoordInOrbit')
-    console.log('triange')
-    console.log(triangle.UserCoord.coords)
-    console.log('lat, vec,dms')
-    console.log(d, thingy )
-    console.log()
+    let userCoord = triangle.UserCoord.coords
+    let thingy = new LatLon(userCoord[0], userCoord[1]);
+    thingy.lat;
+    // console.log('doug ', thingy )
+    // console.log(triangle)
     // console.log( Dms)
+
+
+    // ---------------------------------------------
+
+    // TODO
     // cicumference of Earth 40075km
     // take first sat coord, user coord, 
     // calculate second with distance from user to first coord, distance from first coord to second
@@ -169,11 +162,56 @@ const d = p1.distanceTo(p2); // 404.3×10³ m
 
     // OR
     // http://www.movable-type.co.uk/scripts/latlong-vectors.html#:~:text=source%20code%20below.-,Cross%2Dtrack%20distance,-The%20cross%2Dtrack
+
     return {lat: 0, long: 0};
   }
 
   //TODO
   setAngleElliptical (): number {
     return 0;
+  }
+
+  findClosestPointAlongGeodesic (): {lat: number, long: number} { // todo add triange as parameter 
+    let SC1 = {lat: 11.8704, long: -116.0854}; // todo this stuff will be replaced by the triangle coming in
+    let SC2 = {lat: -32.5204, long: -80.2598};
+    let UserCoord = {lat: 43.1888, long: -70.8868, distance: {SatCoord1: 5553.34}};
+
+    let curentClosestDistance = UserCoord.distance.SatCoord1;
+    let currentClosetsCoord = SC1;
+    let currentCoord = SC1;
+
+    let latDifference = SC1.lat - SC2.lat;
+    let longDifference = SC1.long - SC2.long;
+    let biggestDifference = latDifference > longDifference ? latDifference : longDifference;
+    let latIncrementValue = biggestDifference/latDifference;
+    let longIncrementValue = biggestDifference/longDifference;
+
+    for(let i = 0; i < biggestDifference; i++){
+      console.log('current: ', currentClosetsCoord, 'distance: ', this.distanceAtoB)
+      currentCoord.lat = SC1.lat > SC2.lat ? currentCoord.lat - latIncrementValue : currentCoord.lat + latIncrementValue;
+      currentCoord.long = SC1.long > SC2.long ? currentCoord.long + longIncrementValue : currentCoord.long - longIncrementValue;
+      // currentCoord.long += biggestDifference/longDifference;
+
+      let arr : any = [currentCoord.lat, currentCoord.long];
+      let arr2 : any = [UserCoord.lat, UserCoord.long];
+      this.setDistance(arr, arr2); // todo might need to break this into a one off function so as to not nuke the distanceAtoB value
+
+      if(this.distanceAtoB > curentClosestDistance){
+        console.log('break')
+        break;
+      }
+      console.log('not in break?')
+      currentClosetsCoord = currentCoord;
+      curentClosestDistance = this.distanceAtoB;
+    }
+    return currentClosetsCoord;
+    // set current position var  at sc1
+    // set shortest var at Sc1
+    // increment one lat/long toward sc2
+    // run haversine from new lat/long to usercoord
+    // compare new haversine with sc1 > usercood haversine
+    // if new haversine is shorter, set some shortest var
+    // if new haversine is longer, return shortest var
+    
   }
 }

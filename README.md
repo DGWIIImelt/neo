@@ -1,5 +1,5 @@
 ## Is It Overhead
-An application for determining if there's any NEO (Near Earth Object) 'directly' overhead. It is a simple web app designed to return the name of any satellite that is presently overhead, based on user IP.
+An application for determining if there's any NEO (Near Earth Object) 'directly' overhead. It is a node app designed to return the name of any satellite that is presently overhead, based on user IP.
 
 ## Technical Details
 This application is written in JS and run in Node, utilizing multiple APIs & libraries, including:
@@ -46,6 +46,7 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
   * [TLE API](https://tle.ivanstanojevic.me/api/tle/{id}/propagate)
   * [Haversine Formula wiki](https://en.wikipedia.org/wiki/Haversine_formula)
   * [FreeMapTools](https://www.freemaptools.com/measure-distance.htm)
+  * [GeoJSON](https://geojson.io/)
   * [N2YO Satellite Tracker](https://www.n2yo.com/satellite/?s=25544#results)
   * [MovableType Blog](https://www.movable-type.co.uk/scripts/latlong.html)
 
@@ -68,3 +69,7 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+
+
+seen this used in lambdas at main.js
+require = require('esm')(module);

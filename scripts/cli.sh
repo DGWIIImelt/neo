@@ -43,4 +43,4 @@ if [[ ( $chosenAction = "getSatPropagate" || $chosenAction = "getOrbit" || $chos
   done
 fi
 
-node ./dist/index.js $chosenAction $query
+node ./dist/index.js $chosenAction $query --experimental-json-modules

@@ -3,6 +3,7 @@
   "version": "1.0.1",
   "description": "Toy app for tracking Earth orbiting satellites.",
   "main": "index.js",
+  "module": "commonjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "./scripts/cli.sh",
@@ -15,7 +16,6 @@
   "dependencies": {
     "axios": "^0.24.0",
     "dotenv": "^15.0.0",
-    "geodesy": "2.4.0",
     "satellite.js": "^4.1.3"
   },
   "devDependencies": {

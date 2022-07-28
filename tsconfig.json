@@ -5,21 +5,19 @@
     "declaration": false,
     "experimentalDecorators": true,
     "lib": [
-      "ES2015",
-      "ES6",
+      "ES2017",
+      "dom"
     ],
+    "resolveJsonModule": true,
     "moduleResolution": "node",
-    "module": "commonjs",
-    // "esModuleInterop": true,
+    "module": "CommonJS",
     "target": "es6",
-    // "allowJs": true,
-    // "skipLibCheck": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "outDir": "dist"
   },
   "include": [
-    "src/**/*",
+    "src/**/*"
   ],
   "exclude": [
     "node_modules"
