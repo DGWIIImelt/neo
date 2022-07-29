@@ -49,6 +49,7 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
   * [GeoJSON](https://geojson.io/)
   * [N2YO Satellite Tracker](https://www.n2yo.com/satellite/?s=25544#results)
   * [MovableType Blog](https://www.movable-type.co.uk/scripts/latlong.html)
+  * [GIS StackExchange](https://gis.stackexchange.com/questions/436868/calculate-nearest-point-in-a-orbital-path-to-user-gps)
 
 ## Future Plans
   * ~~calculate full orbital path of chosen satellite~~
@@ -69,7 +70,3 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-
-
-seen this used in lambdas at main.js
-require = require('esm')(module);

@@ -1,15 +1,40 @@
 import { TLEapi } from '../api/tle';
 import { UserAddressApi } from '../api/userAdress';
-import { LatLon } from './geodesy/latlon-spherical';
-import { triangle } from '../index';
-
 const satellite = require('satellite.js');
+export interface triangle {
+  UserCoord:{
+    coords: number[],
+    angle: number,
+    distance: {
+      SatCoord1: number,
+      SatCoord2: number
+    }
+  },
+  SatCoord1:{
+    coords: number[],
+    angle: number,
+    distance: {
+      UserCoord: number,
+      SatCoord2: number
+    }
+  },
+  SatCoord2:{
+    coords: number[],
+    angle: number,
+    distance: {
+      SatCoord1: number,
+      UserCoord: number
+    }
+  }
+}
+
 export class OverHead {
   action: string = '';
   distanceAtoB: number = undefined; //used both for distance between user and sat as well as distnace between the same sat over a period of time
   query: string = '';
   userCoord: number[] = [null, null];
   satCoord: number[] = [null, null];
+  coordTriangle: triangle;
   satData;
 
   constructor (action: string, query: string) {
@@ -79,7 +104,7 @@ export class OverHead {
     this.userCoord = coords != undefined ? coords : await UserAddressApi.getUserAddressViaIP();
   }
 
-  setSatCoordLocal (hourOffset: number = 0) {
+  setSatCoordLocal (hourOffset: number = 0) : void {
     const { line1, line2 } = this.satData;
     const satrec = satellite.twoline2satrec(line1, line2);
     const now : Date = new Date();
@@ -105,10 +130,73 @@ export class OverHead {
       satellite.degreesLat(satelliteGround.latitude), 
       satellite.degreesLong(satelliteGround.longitude)
     ];
-
   }
 
-  setSatOrbitCoords (SCs: object[]) {
+  setAngleEuclidean (A: number, B: number, C: number) : number {
+    // sets angles of a triangle based on side lengths, presumes a flat surface so might not be accurate enough for this task
+    // let thingy = setAngleEuclidean(8, 5, 10); // TEST equals 52.41 https://www.youtube.com/watch?v=COMiK1L0Oj8
+    // console.log('Thingy: ', thingy)
+    const sides : number = Math.pow(A, 2) - Math.pow(B, 2) - Math.pow(C, 2);
+    const angRad : number = Math.acos(sides / (-2 * B * C));
+    const angDeg : number = angRad * 180 / Math.PI; // rad > deg
+
+    return angDeg;
+  }
+
+  setEuclideanTriangle (distances: object[]) : void {
+    distances.sort((a: object, b:object) => a['distance'] - b['distance']);
+
+    const { SC1, SC2 } = this.getSatOrbitCoords(distances);
+    this.setDistance(SC1['coords'], SC2['coords']);
+    const SC1toSC2dist = this.distanceAtoB;
+
+    let triangle : triangle = {
+      UserCoord:{
+        coords: this.userCoord,
+        angle: undefined,
+        distance: {
+          SatCoord1: SC1['distance'],
+          SatCoord2: SC2['distance']
+        }
+      },
+      SatCoord1:{
+        coords: SC1['coords'],
+        angle: undefined,
+        distance: {
+          UserCoord: SC1['distance'],
+          SatCoord2: SC1toSC2dist
+        }
+      },
+      SatCoord2:{
+        coords: SC2['coords'],
+        angle: undefined,
+        distance: {
+          SatCoord1: SC1toSC2dist,
+          UserCoord: SC2['distance']
+        }
+      }
+    };
+
+    triangle.UserCoord.angle = this.setAngleEuclidean(
+      triangle.SatCoord1.distance.SatCoord2,
+      triangle.SatCoord1.distance.UserCoord,
+      triangle.SatCoord2.distance.UserCoord
+    );
+    triangle.SatCoord1.angle = this.setAngleEuclidean(
+      triangle.SatCoord2.distance.UserCoord,
+      triangle.SatCoord1.distance.UserCoord,
+      triangle.SatCoord2.distance.SatCoord1
+    );
+    triangle.SatCoord2.angle = this.setAngleEuclidean(
+      triangle.SatCoord1.distance.UserCoord,
+      triangle.SatCoord2.distance.UserCoord,
+      triangle.SatCoord2.distance.SatCoord1
+    );
+
+    this.coordTriangle = triangle;
+  }
+
+  getSatOrbitCoords (SCs: object[]) : {SC1: object, SC2: object} {
     // grab the two nearest coords presently caclculated
     // presumes an array of coords sorted by thier proximity to the user coord returns the closest SC1 and a coord next to the closest
     const SC1 : object = SCs[0];
@@ -127,91 +215,41 @@ export class OverHead {
     return {SC1, SC2};
   }
 
-  setAngleEuclidean (A: number, B: number, C: number): number {
-    // sets angles of a triangle based on side lengths, presumes a flat surface so might not be accurate enough for this task
-    // let thingy = setAngleEuclidean(8, 5, 10); // TEST equals 52.41 https://www.youtube.com/watch?v=COMiK1L0Oj8
-      // console.log('Thingy: ', thingy)
-    const sides : number = Math.pow(A, 2) - Math.pow(B, 2) - Math.pow(C, 2);
-    const angRad : number = Math.acos(sides / (-2 * B * C));
-    const angDeg : number = angRad * 180 / Math.PI; // rad > deg
+  findClosestPointAlongGeodesic (triangle: triangle) : { previousCoord: number[], previousDistance: number } {
+    // in lieu of a sexy noneuclidean geometry solution, this function takes the geodesic line-segment between SC1 and SC2 and increments the lat/long coords from SC1 to SC2, checking the distance from this new coord to the user and returning when the shortest distance is found
+    let currentDistance : number = triangle.UserCoord.distance.SatCoord1;
+    let currentCoord : number[] = triangle.SatCoord1.coords.slice(); //copy the value, dont reference the original array
 
-    return angDeg;
-  }
+    let previousDistance : number = triangle.UserCoord.distance.SatCoord1;
+    let previousCoord : number[] = triangle.SatCoord1.coords.slice();
 
-  //TODO
-  setClosestCoordInOrbit (triangle: triangle): {lat: number, long: number} {
-    let userCoord = triangle.UserCoord.coords
-    let thingy = new LatLon(userCoord[0], userCoord[1]);
-    thingy.lat;
-    // console.log('doug ', thingy )
-    // console.log(triangle)
-    // console.log( Dms)
+    let cur : any = currentCoord.slice();
+    const usr : any = triangle.UserCoord.coords.slice(); // any because TS being pain, dont care
 
-
-    // ---------------------------------------------
-
-    // TODO
-    // cicumference of Earth 40075km
-    // take first sat coord, user coord, 
-    // calculate second with distance from user to first coord, distance from first coord to second
-    // make triangle with first to la
-
-    // OR
-    // calculate all points in a circle around the earth, following the path of the orbit
-    // binary search it, checking if distance from a point on the circle is greater/lesser than a previous one to the user coords, using haversine each time
-
-    // OR
-    // http://www.movable-type.co.uk/scripts/latlong-vectors.html#:~:text=source%20code%20below.-,Cross%2Dtrack%20distance,-The%20cross%2Dtrack
-
-    return {lat: 0, long: 0};
-  }
-
-  //TODO
-  setAngleElliptical (): number {
-    return 0;
-  }
-
-  findClosestPointAlongGeodesic (): {lat: number, long: number} { // todo add triange as parameter 
-    let SC1 = {lat: 11.8704, long: -116.0854}; // todo this stuff will be replaced by the triangle coming in
-    let SC2 = {lat: -32.5204, long: -80.2598};
-    let UserCoord = {lat: 43.1888, long: -70.8868, distance: {SatCoord1: 5553.34}};
-
-    let curentClosestDistance = UserCoord.distance.SatCoord1;
-    let currentClosetsCoord = SC1;
-    let currentCoord = SC1;
-
-    let latDifference = SC1.lat - SC2.lat;
-    let longDifference = SC1.long - SC2.long;
-    let biggestDifference = latDifference > longDifference ? latDifference : longDifference;
-    let latIncrementValue = biggestDifference/latDifference;
-    let longIncrementValue = biggestDifference/longDifference;
+    const latDifference : number = triangle.SatCoord1.coords[0] - triangle.SatCoord2.coords[0];
+    const longDifference : number = triangle.SatCoord1.coords[1] - triangle.SatCoord2.coords[1];
+    const biggestDifference : number = latDifference > longDifference ? latDifference : longDifference;
+    const latIncrementValue : number = Math.abs(biggestDifference/latDifference);
+    const longIncrementValue : number = Math.abs(biggestDifference/longDifference);
+    const latIncrement : boolean = triangle.SatCoord1.coords[0] > triangle.SatCoord2.coords[0];
+    const longIncrement : boolean = triangle.SatCoord1.coords[1] > triangle.SatCoord2.coords[1];
 
     for(let i = 0; i < biggestDifference; i++){
-      console.log('current: ', currentClosetsCoord, 'distance: ', this.distanceAtoB)
-      currentCoord.lat = SC1.lat > SC2.lat ? currentCoord.lat - latIncrementValue : currentCoord.lat + latIncrementValue;
-      currentCoord.long = SC1.long > SC2.long ? currentCoord.long + longIncrementValue : currentCoord.long - longIncrementValue;
-      // currentCoord.long += biggestDifference/longDifference;
+      this.setDistance(cur, usr); // call it at the start to not use the last stored value before passing it to the next line
+      currentDistance = this.distanceAtoB;
 
-      let arr : any = [currentCoord.lat, currentCoord.long];
-      let arr2 : any = [UserCoord.lat, UserCoord.long];
-      this.setDistance(arr, arr2); // todo might need to break this into a one off function so as to not nuke the distanceAtoB value
-
-      if(this.distanceAtoB > curentClosestDistance){
-        console.log('break')
+      if(currentDistance > previousDistance){
         break;
       }
-      console.log('not in break?')
-      currentClosetsCoord = currentCoord;
-      curentClosestDistance = this.distanceAtoB;
+      previousCoord = currentCoord.slice();
+      previousDistance = currentDistance;
+
+      currentCoord[0] = latIncrement ? currentCoord[0] - latIncrementValue : currentCoord[0] + latIncrementValue;
+      currentCoord[1] = longIncrement ? currentCoord[1] - longIncrementValue : currentCoord[1] + longIncrementValue;
+
+      cur = currentCoord.slice();
     }
-    return currentClosetsCoord;
-    // set current position var  at sc1
-    // set shortest var at Sc1
-    // increment one lat/long toward sc2
-    // run haversine from new lat/long to usercoord
-    // compare new haversine with sc1 > usercood haversine
-    // if new haversine is shorter, set some shortest var
-    // if new haversine is longer, return shortest var
-    
+
+    return {previousCoord, previousDistance};
   }
 }

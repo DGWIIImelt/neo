@@ -22,6 +22,9 @@ select action in "${actions[@]}"; do
         "getNearMe24hrs")
             chosenAction="getNearMe24hrs"
             break;;
+        "getNearMeOneOrbit")
+            chosenAction="getNearMeOneOrbit"
+            break;;
         "test")
             chosenAction="test"
             break;;
@@ -35,7 +38,7 @@ done
 echo "Query/ID:"
 read query
 
-if [[ ( $chosenAction = "getSatPropagate" || $chosenAction = "getOrbit" || $chosenAction = "getOrbits24hrs" || $chosenAction = "getNearMe24hrs" || $chosenAction = "getDistanceFromMe" ) && $query = "" ]]; then
+if [[ ( $chosenAction = "getSatPropagate" || $chosenAction = "getOrbit" || $chosenAction = "getOrbits24hrs" || $chosenAction = "getNearMe24hrs" || $chosenAction = "getNearMeOneOrbit" || $chosenAction = "getDistanceFromMe" ) && $query = "" ]]; then
   while [[ $query = "" ]]
   do
     echo "Query/ID is required for this action:"
