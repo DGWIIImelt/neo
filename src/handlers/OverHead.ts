@@ -105,6 +105,7 @@ export class OverHead {
   }
 
   setSatCoordLocal (hourOffset: number = 0) : void {
+    // Processes TLEs locally to avoid hitting the /propagate endpoint of the TLE API
     const { line1, line2 } = this.satData;
     const satrec = satellite.twoline2satrec(line1, line2);
     const now : Date = new Date();
@@ -146,7 +147,7 @@ export class OverHead {
   setEuclideanTriangle (distances: object[]) : void {
     distances.sort((a: object, b:object) => a['distance'] - b['distance']);
 
-    const { SC1, SC2 } = this.getSatOrbitCoords(distances);
+    const { SC1, SC2 } = this.getNearestSatOrbitCoords(distances);
     this.setDistance(SC1['coords'], SC2['coords']);
     const SC1toSC2dist = this.distanceAtoB;
 
@@ -196,7 +197,21 @@ export class OverHead {
     this.coordTriangle = triangle;
   }
 
-  getSatOrbitCoords (SCs: object[]) : {SC1: object, SC2: object} {
+  getOrbitCoords (tle: string, fullDay: boolean) : {periodHours: number, coords: object[]} {
+    const coords : object[] = [];
+    const line2parts : string[] = tle.split(' ');
+    const meanMotion : number = fullDay ? 1 : parseFloat(line2parts[line2parts.length - 1]);
+    const orbitalPeriodHrs : number = (24 / meanMotion) * 100;
+//todo loop through as a ratio of the orbit, return 10 points every time
+    for(let i : number = 0; i < orbitalPeriodHrs; i += 25){ // looping 1/4hr of orbital period
+      const offset : number = i/100;
+      this.setSatCoordLocal(offset);
+      coords.push({lat: this.satCoord[0], long: this.satCoord[1], offset });
+    }
+    return {periodHours: orbitalPeriodHrs, coords};
+  }
+
+  getNearestSatOrbitCoords (SCs: object[]) : {SC1: object, SC2: object} {
     // grab the two nearest coords presently caclculated
     // presumes an array of coords sorted by thier proximity to the user coord returns the closest SC1 and a coord next to the closest
     const SC1 : object = SCs[0];
