@@ -1,5 +1,6 @@
 import { OverHead, triangle } from './handlers/OverHead';
 import * as testData from './data/test.json';
+import * as fs from 'fs';
 
 (async() => {
   const OH = new OverHead(process.argv[2], process.argv[3]);
@@ -11,46 +12,41 @@ import * as testData from './data/test.json';
       OH.setSatCoordLocal();
       OH.setDistance();
 
-      console.log(`Distance from you to ${OH.query}: ${OH.distanceAtoB} km.`);
-      console.log(`User lat/long: ${OH.userCoord[0]} ${OH.userCoord[1]}`);
-      console.log(`Sat lat/long: ${OH.satCoord[0]} ${OH.satCoord[1]}`);
+      console.log(`
+        Distance from you to ${OH.query}: ${OH.distanceAtoB} km
+        User lat/long: ${OH.userCoord[0]} ${OH.userCoord[1]}
+        Sat lat/long: ${OH.satCoord[0]} ${OH.satCoord[1]}
+      `);
       break;
-      
+
     case "getOrbit":
-      {
+      { // scoping vars to the case not the switch
         await OH.setSatData();
-        const coords : object[] = [];
-        const line2parts : string[] = OH.satData.line2.split(' ');
-        const meanMotion : number = parseFloat(line2parts[line2parts.length - 1]);
-        const orbitalPeriodHrs : number = (24 / meanMotion) * 100;
+        const orbit = OH.getOrbitCoords(OH.satData.line2, false);
 
-        for(let i : number = 0; i < orbitalPeriodHrs; i += 25){ // looping 1/4hr of orbital period
-          const offset : number = i/100;
-          OH.setSatCoordLocal(offset);
-          coords.push({lat: OH.satCoord[0], long: OH.satCoord[1], offset });
-        }
-
-        console.log('orbital period (hrs): ', orbitalPeriodHrs, 'cords: ', coords)
+        console.log(`
+          orbital period (hrs): ${orbit.periodHours}
+          cords: [
+            ${orbit.coords.map((el) => `${[el['lat'], el['long']]}\n`)}
+          ]
+        `);
       }
       break;
 
     case "getOrbits24hrs":
       {
         await OH.setSatData();
-        const coords : object[] = [];
+        const orbit = OH.getOrbitCoords(OH.satData.line2, true);
 
-        for(let i : number = 0; i < 2400; i += 25){ // looping 1/4hr of day
-          const offset : number = i/100;
-          OH.setSatCoordLocal(offset);
-          coords.push({lat: OH.satCoord[0], long: OH.satCoord[1], offset });
-        }
-
-        console.log('24(hrs) | cords: ', coords)
+        console.log(`
+          orbital period (hrs): ${orbit.periodHours}
+          cords: ${orbit.coords}
+        `);
       }
       break;
 
     case "getNearMe24hrs":
-      // todo doing one orbit to get the math figured out first
+// todo doing one orbit to get the math figured out first
       await OH.setSatData();
       await OH.setUserCoord();
       const coords : number[][] = [];
@@ -75,43 +71,143 @@ import * as testData from './data/test.json';
       break;
 
     case "getNearMeOneOrbit":
-      const data = setTestData(testData.features);
-      OH.setEuclideanTriangle(data);
+      {
+        await OH.setSatData();
+        await OH.setUserCoord();
+        OH.setSatCoordLocal();
+        const originalSatLatLong = OH.satCoord.slice();
+        const data = OH.getOrbitCoords(OH.satData.line2, false).coords;
+        const orbit = setData(data, false);
+
+        OH.setEuclideanTriangle(orbit);
+        const euclideanTriangle : triangle = OH.coordTriangle;
+        const closest = OH.findClosestPointAlongGeodesic(euclideanTriangle);
+
+        console.log(`
+          Current Sat lat/long: ${originalSatLatLong}
+          Triangle sat1: ${euclideanTriangle.SatCoord1.coords}
+          Triangle sat2: ${euclideanTriangle.SatCoord2.coords}
+          Distance from you to closest point on geodesic: ${closest.previousDistance} km
+          Closest Sat lat/long: ${closest.previousCoord[0]} ${closest.previousCoord[1]}
+        `)
+      }
+      break;
+
+    case "createTestData":
+      {
+        interface feature {
+            "type": "Feature",
+            "label": "user" | "satellite",
+            "geometry": {
+              "type": "Point",
+              "coordinates": number[]
+            },
+            "properties": {
+              "marker-color": string,
+              "marker-size": string,
+              "marker-symbol": string
+            }
+        };
+        await OH.setUserCoord();
+        await OH.setSatData();
+        const orbit = OH.getOrbitCoords(OH.satData.line2, false);
+        const coordNum : number[] = [OH.userCoord[1], OH.userCoord[0]];
+        const testData = {
+          "type": "FeatureCollection",
+          "features": []
+        };
+        const userFeature : feature = {
+          "type": "Feature",
+          "label": "user",
+          "geometry": {
+            "type": "Point",
+            "coordinates": coordNum
+          },
+          "properties": {
+            "marker-color": "#dd11",
+            "marker-size": "medium",
+            "marker-symbol": ""
+          }
+        }
+        orbit.coords.forEach((coord) => {
+          const coordNum : number[] = [coord['long'], coord['lat']];
+          const satFeature : feature = {
+            "type": "Feature",
+            "label": "satellite",
+            "geometry": {
+              "type": "Point",
+              "coordinates": coordNum
+            },
+            "properties": {
+              "marker-color": "#501dc9",
+              "marker-size": "medium",
+              "marker-symbol": ""
+            }
+          }
+          testData.features.push(satFeature);
+        });
+        testData.features.unshift(userFeature);
+
+        try {
+          fs.writeFileSync('./src/data/test.json', JSON.stringify(testData));
+          console.log('Test data created successfully.')
+        } catch (err) {
+          console.error(err);
+        }
+      }
+      break;
+
+    case "test":
+      console.log('TEST case is presently a copy of getNearMeOneOrbit option using historical accurate local data');
+      const testUserCoord = testData.features.find((el: object) => el['label'] == 'user').geometry.coordinates;
+      OH.setUserCoord([testUserCoord[1], testUserCoord[0]]); // values were swapped for use with geojson.io
+      const orbit = setData(testData.features, true);
+      OH.setEuclideanTriangle(orbit);
       const euclideanTriangle : triangle = OH.coordTriangle;
       const closest = OH.findClosestPointAlongGeodesic(euclideanTriangle);
 
-      console.log(`Distance from you to closest point on geodesic: ${closest.previousDistance} km.`);
-      console.log(`Sat lat/long: ${closest.previousCoord[0]} ${closest.previousCoord[1]}`);
+      console.log(`
+        Distance from you to closest point on geodesic: ${closest.previousDistance} km
+        Sat lat/long: ${closest.previousCoord[0]} ${closest.previousCoord[1]}
+      `);
       break;
 
     case "getSatPropagate":
       await OH.setSatPropagate();
-      console.log('TLE API propogate data:');
-      console.log(OH.satData);
+      console.log(`
+        TLE API propogate data: ${OH.satData}
+      `);
       break;
 
     case "search":
       await OH.setSatData();
-      console.log(`Satellite data: ${JSON.stringify(OH.satData)}`);
-      console.log(OH.satData);
+      console.log(`
+        Satellite data: ${JSON.stringify(OH.satData)}
+        ${OH.satData}
+      `);
+      console.log();
       break;
   }
 
-  function setTestData (data: any[]) : object[] {
+  function setData (data: any[], test: boolean) : {distance: number, order: number, coords: number[]}[] {
     // pulls in test data, reorgs it a bit and runs some calcs and returns an array of satCoords with distances to the user calculated
-    const testUserCoord = data.find((el: object) => el['label'] == 'user').geometry.coordinates;
-    const testSatCoords = data
-      .filter((el: object) => el['label'] == 'satellite')
-      .map((el: object) => [el['geometry'].coordinates[1], el['geometry'].coordinates[0]]); // values were swapped for use with geojson.io
-    OH.setUserCoord([testUserCoord[1], testUserCoord[0]]); // values were swapped for use with geojson.io
-    const distances : object[] = [];
+    const orbit = data
+      .filter((el: object) => {
+        if(test){
+          return el['label'] == 'satellite';
+        }
+        return el;
+      })
+      .map((el: object, index: number) => {
+        OH.setSatCoord(test ? [el['geometry'].coordinates[1], el['geometry'].coordinates[0]] : [el['lat'], el['long']]); // values were swapped for use with geojson.io
+        OH.setDistance();
+        return {
+          distance: OH.distanceAtoB,
+          order: index,
+          coords: OH.satCoord
+        }
+      });
 
-    testSatCoords.forEach((el: [], index: number) => {
-      OH.setSatCoord(el);
-      OH.setDistance(); // distance from this point in the sat orbit to the user
-      distances.push({distance: OH.distanceAtoB, order: index, coords: OH.satCoord});
-    });
-
-    return distances;
+    return orbit;
   }
 })()

@@ -6,6 +6,9 @@ class UserAddress {
     return await axios.get(`https://ipinfo.io?token=${process.env.address_key}`)
     .then((response) => {
       let address = response.data.loc.split(',');
+      address[0] = parseFloat(address[0]);
+      address[1] = parseFloat(address[1]);
+
       return address;
     })
     .catch((error) => {
