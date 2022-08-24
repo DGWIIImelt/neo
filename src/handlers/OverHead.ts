@@ -12,6 +12,7 @@ export interface triangle {
   },
   SatCoord1:{
     coords: number[],
+    offset: number,
     angle: number,
     distance: {
       UserCoord: number,
@@ -20,6 +21,7 @@ export interface triangle {
   },
   SatCoord2:{
     coords: number[],
+    offset: number,
     angle: number,
     distance: {
       SatCoord1: number,
@@ -118,7 +120,6 @@ export class OverHead {
     // const { position, velocity } = satellite.propagate(satrec, now); will need velocity if i want to predict where/when the satellite arrives
 
     const { position } = satellite.propagate(satrec, now);
-    // console.log(satrec)
     // Get satellites ground based position, in Radians
     const positionGd = satellite.eciToGeodetic(position, gmst);
     const satelliteGround = {
@@ -128,7 +129,7 @@ export class OverHead {
     };
 
     this.satCoord = [
-      satellite.degreesLat(satelliteGround.latitude), 
+      satellite.degreesLat(satelliteGround.latitude),
       satellite.degreesLong(satelliteGround.longitude)
     ];
   }
@@ -136,7 +137,6 @@ export class OverHead {
   setAngleEuclidean (A: number, B: number, C: number) : number {
     // sets angles of a triangle based on side lengths, presumes a flat surface so might not be accurate enough for this task
     // let thingy = setAngleEuclidean(8, 5, 10); // TEST equals 52.41 https://www.youtube.com/watch?v=COMiK1L0Oj8
-    // console.log('Thingy: ', thingy)
     const sides : number = Math.pow(A, 2) - Math.pow(B, 2) - Math.pow(C, 2);
     const angRad : number = Math.acos(sides / (-2 * B * C));
     const angDeg : number = angRad * 180 / Math.PI; // rad > deg
@@ -150,7 +150,6 @@ export class OverHead {
     const { SC1, SC2 } = this.getNearestSatOrbitCoords(distances);
     this.setDistance(SC1['coords'], SC2['coords']);
     const SC1toSC2dist = this.distanceAtoB;
-
     let triangle : triangle = {
       UserCoord:{
         coords: this.userCoord,
@@ -162,6 +161,7 @@ export class OverHead {
       },
       SatCoord1:{
         coords: SC1['coords'],
+        offset: SC1['offsetHrs'],
         angle: undefined,
         distance: {
           UserCoord: SC1['distance'],
@@ -170,6 +170,7 @@ export class OverHead {
       },
       SatCoord2:{
         coords: SC2['coords'],
+        offset: SC2['offsetHrs'],
         angle: undefined,
         distance: {
           SatCoord1: SC1toSC2dist,
@@ -200,10 +201,10 @@ export class OverHead {
   getOrbitCoords (tle: string, fullDay: boolean) : {periodHours: number, coords: object[]} {
     const coords : object[] = [];
     const line2parts : string[] = tle.split(' ');
-    const meanMotion : number = fullDay ? 1 : parseFloat(line2parts[line2parts.length - 1]);
-    const orbitalPeriodHrs : number = (24 / meanMotion) * 100;
-//todo loop through as a ratio of the orbit, return 10 points every time
-    for(let i : number = 0; i < orbitalPeriodHrs; i += 25){ // looping 1/4hr of orbital period
+    const meanMotion : number = fullDay ? 1 : parseFloat(line2parts[line2parts.length - 1]); // speed for 1 orbit
+    const orbitalPeriodHrs : number = (24 / meanMotion) * 100; // time for 1 orbit
+
+    for(let i : number = 0; i < orbitalPeriodHrs; i += (orbitalPeriodHrs/10)){
       const offset : number = i/100;
       this.setSatCoordLocal(offset);
       coords.push({lat: this.satCoord[0], long: this.satCoord[1], offset });
@@ -212,6 +213,7 @@ export class OverHead {
   }
 
   getNearestSatOrbitCoords (SCs: object[]) : {SC1: object, SC2: object} {
+    // todo needs to be redesigned to have the usercoord in between these two
     // grab the two nearest coords presently caclculated
     // presumes an array of coords sorted by thier proximity to the user coord returns the closest SC1 and a coord next to the closest
     const SC1 : object = SCs[0];
@@ -230,6 +232,56 @@ export class OverHead {
     return {SC1, SC2};
   }
 
+  findClosestPointAlongGeodesic2 (triangle: triangle) : { previousCoord: number[], previousDistance: number, time: string } {
+    //todo previous attempt is following what I'm guessing is a linear line connecting the 2 coords that has no relationship to hte calculated orbit.
+    //todo need to change for incrementing the lat/long to incrementing the time component from one SC to the next using setSatCoordLocal(),
+    //todo this will give me the coords, keep them on the projected orbit, and i'll now when they'll be there
+    //todo binary search it, to halve the work over and over
+
+    console.log('HERE', triangle.SatCoord1.offset)
+
+    //todo
+    // * get difference between offsets of SC1 & SC2
+    // * increment from the lowest offset to the highest
+    // * pass in new offest vale to setSatCoordLocal
+    const SC1soonest : boolean = triangle.SatCoord1.offset < triangle.SatCoord2.offset ? true : false;
+    const SC = (reverse? : boolean) => {
+      if(SC1soonest){
+        return reverse ? 'SatCoord2' : 'SatCoord1';
+      }else{
+        return reverse ? 'SatCoord1' : 'SatCoord2';
+      }
+    };
+    const soonestSC = triangle[SC()].offset;
+    const latestSC = triangle[SC(true)].offset;
+
+    let currentDistance : number = triangle.UserCoord.distance[SC()];
+    let currentCoord : number[] = triangle[SC()].coords.slice(); //copy the value, dont reference the original array
+
+    let previousDistance : number = triangle.UserCoord.distance[SC()];
+    let previousCoord : number[] = triangle[SC()].coords.slice();
+
+    let cur : any = currentCoord.slice();
+    const usr : any = triangle.UserCoord.coords.slice(); // any because TS being pain, dont care
+
+
+    const offsetDifference = latestSC - soonestSC;
+
+    const test = []
+    for(let i = soonestSC; i < latestSC; i += offsetDifference/10){
+      this.setDistance(cur, usr); // call it at the start to not use the last stored value before passing it to the next line
+      test.push({previousCoord, previousDistance})
+      currentDistance = this.distanceAtoB;
+
+      if(currentDistance > previousDistance){
+        break;
+      }
+      previousCoord = currentCoord.slice();
+      previousDistance = currentDistance;
+    }
+    return {previousCoord: [2], previousDistance: 2, time: "2"}
+  }
+
   findClosestPointAlongGeodesic (triangle: triangle) : { previousCoord: number[], previousDistance: number } {
     // in lieu of a sexy noneuclidean geometry solution, this function takes the geodesic line-segment between SC1 and SC2 and increments the lat/long coords from SC1 to SC2, checking the distance from this new coord to the user and returning when the shortest distance is found
     let currentDistance : number = triangle.UserCoord.distance.SatCoord1;
@@ -241,16 +293,26 @@ export class OverHead {
     let cur : any = currentCoord.slice();
     const usr : any = triangle.UserCoord.coords.slice(); // any because TS being pain, dont care
 
-    const latDifference : number = triangle.SatCoord1.coords[0] - triangle.SatCoord2.coords[0];
-    const longDifference : number = triangle.SatCoord1.coords[1] - triangle.SatCoord2.coords[1];
-    const biggestDifference : number = latDifference > longDifference ? latDifference : longDifference;
-    const latIncrementValue : number = Math.abs(biggestDifference/latDifference);
-    const longIncrementValue : number = Math.abs(biggestDifference/longDifference);
-    const latIncrement : boolean = triangle.SatCoord1.coords[0] > triangle.SatCoord2.coords[0];
-    const longIncrement : boolean = triangle.SatCoord1.coords[1] > triangle.SatCoord2.coords[1];
+    const latDifference : number = Math.abs(triangle.SatCoord1.coords[0] - triangle.SatCoord2.coords[0]);
+    const longDifference : number = Math.abs(triangle.SatCoord1.coords[1] - triangle.SatCoord2.coords[1]);
+    const biggestDifference : number = Math.abs(latDifference > longDifference ? latDifference : longDifference);
+    const latIncrementValue : number = Math.abs(latDifference/biggestDifference);
+    const longIncrementValue : number = Math.abs(longDifference/biggestDifference);
+    const incrementLat : boolean = triangle.SatCoord1.coords[0] > triangle.SatCoord2.coords[0];
+    const incrementLong : boolean = triangle.SatCoord1.coords[1] > triangle.SatCoord2.coords[1];
 
+    //todo looks like the incrment value for the lat vs long is swapped
+    console.log(latDifference, latIncrementValue)
+    console.log(longDifference , longIncrementValue)
+    console.log(biggestDifference)
+
+// todo could just incremtn all the way from sc1 > sc2 then sort the values to see which is closest, how many values?
+
+//todo could also drop the increment value a bit to get closer
+const test = []
     for(let i = 0; i < biggestDifference; i++){
       this.setDistance(cur, usr); // call it at the start to not use the last stored value before passing it to the next line
+      test.push({previousCoord, previousDistance})
       currentDistance = this.distanceAtoB;
 
       if(currentDistance > previousDistance){
@@ -259,12 +321,16 @@ export class OverHead {
       previousCoord = currentCoord.slice();
       previousDistance = currentDistance;
 
-      currentCoord[0] = latIncrement ? currentCoord[0] - latIncrementValue : currentCoord[0] + latIncrementValue;
-      currentCoord[1] = longIncrement ? currentCoord[1] - longIncrementValue : currentCoord[1] + longIncrementValue;
+      //todo could average the incrmente value of both lat and long, using just one increment value also could be used int he for loop to keep everything synced
+
+      // todo not sure how the southern hemisphere will work lat/long value can be 90 -90 lat 180 -180 long
+      currentCoord[0] = (incrementLat ? (currentCoord[0] - latIncrementValue) : (currentCoord[0] + latIncrementValue)) % 90;
+      currentCoord[1] = (incrementLong ? (currentCoord[1] - longIncrementValue) : (currentCoord[1] + longIncrementValue)) % 180;
 
       cur = currentCoord.slice();
     }
 
+console.log(test)
     return {previousCoord, previousDistance};
   }
 }

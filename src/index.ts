@@ -26,8 +26,9 @@ import * as fs from 'fs';
 
         console.log(`
           orbital period (hrs): ${orbit.periodHours}
+          [lat, long, offset (hours from current point in oribit)]
           cords: [
-            ${orbit.coords.map((el) => `${[el['lat'], el['long']]}\n`)}
+            ${orbit.coords.map((el) => `${[el['lat'], el['long']]} ${el['offset']}\n`)}
           ]
         `);
       }
@@ -83,6 +84,7 @@ import * as fs from 'fs';
         const euclideanTriangle : triangle = OH.coordTriangle;
         const closest = OH.findClosestPointAlongGeodesic(euclideanTriangle);
 
+        //todo need to get the time when this latlong is happening
         console.log(`
           Current Sat lat/long: ${originalSatLatLong}
           Triangle sat1: ${euclideanTriangle.SatCoord1.coords}
@@ -95,12 +97,14 @@ import * as fs from 'fs';
 
     case "createTestData":
       {
+        // feature interface and swapping of lat/long values are added to allow for quick copy/paste to geojson.io for visualization while working on the project
         interface feature {
             "type": "Feature",
             "label": "user" | "satellite",
             "geometry": {
               "type": "Point",
-              "coordinates": number[]
+              "coordinates": number[],
+              "offset": number
             },
             "properties": {
               "marker-color": string,
@@ -121,7 +125,8 @@ import * as fs from 'fs';
           "label": "user",
           "geometry": {
             "type": "Point",
-            "coordinates": coordNum
+            "coordinates": coordNum,
+            "offset": undefined
           },
           "properties": {
             "marker-color": "#dd11",
@@ -136,7 +141,8 @@ import * as fs from 'fs';
             "label": "satellite",
             "geometry": {
               "type": "Point",
-              "coordinates": coordNum
+              "coordinates": coordNum,
+              "offset": coord['offset']
             },
             "properties": {
               "marker-color": "#501dc9",
@@ -150,7 +156,7 @@ import * as fs from 'fs';
 
         try {
           fs.writeFileSync('./src/data/test.json', JSON.stringify(testData));
-          console.log('Test data created successfully.')
+          console.log('Test data created successfully, located ./src/data/test.json')
         } catch (err) {
           console.error(err);
         }
@@ -158,15 +164,22 @@ import * as fs from 'fs';
       break;
 
     case "test":
+//todo confirm using new test data that this is working appropriately, I dont think it is
+
       console.log('TEST case is presently a copy of getNearMeOneOrbit option using historical accurate local data');
       const testUserCoord = testData.features.find((el: object) => el['label'] == 'user').geometry.coordinates;
       OH.setUserCoord([testUserCoord[1], testUserCoord[0]]); // values were swapped for use with geojson.io
+      // OH.setSatCoordLocal();
+      // const originalSatLatLong = OH.satCoord.slice();
       const orbit = setData(testData.features, true);
       OH.setEuclideanTriangle(orbit);
       const euclideanTriangle : triangle = OH.coordTriangle;
-      const closest = OH.findClosestPointAlongGeodesic(euclideanTriangle);
+      const closest = OH.findClosestPointAlongGeodesic2(euclideanTriangle);
 
       console.log(`
+        Triangle sat1: ${euclideanTriangle.SatCoord1.coords}
+        Triangle sat2: ${euclideanTriangle.SatCoord2.coords}
+        Distance from you to SC1: ${euclideanTriangle.SatCoord1.distance.UserCoord} km
         Distance from you to closest point on geodesic: ${closest.previousDistance} km
         Sat lat/long: ${closest.previousCoord[0]} ${closest.previousCoord[1]}
       `);
@@ -201,10 +214,12 @@ import * as fs from 'fs';
       .map((el: object, index: number) => {
         OH.setSatCoord(test ? [el['geometry'].coordinates[1], el['geometry'].coordinates[0]] : [el['lat'], el['long']]); // values were swapped for use with geojson.io
         OH.setDistance();
+
         return {
           distance: OH.distanceAtoB,
           order: index,
-          coords: OH.satCoord
+          coords: OH.satCoord,
+          offsetHrs: el['geometry']['offset']
         }
       });
 
