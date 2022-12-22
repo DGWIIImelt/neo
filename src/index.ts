@@ -73,6 +73,8 @@ import * as fs from 'fs';
 
     case "getNearMeOneOrbit":
       {
+            //TODO: createtestdata on every run of the getoneorbit so I can see the value on a map
+
         await OH.setSatData();
         await OH.setUserCoord();
         OH.setSatCoordLocal();
@@ -82,15 +84,19 @@ import * as fs from 'fs';
 
         OH.setEuclideanTriangle(orbit);
         const euclideanTriangle : triangle = OH.coordTriangle;
-        const closest = OH.findClosestPointAlongGeodesic(euclideanTriangle);
+        const closest = OH.getClosestPointAlongGeodesic(euclideanTriangle);
 
-        //todo need to get the time when this latlong is happening
         console.log(`
+          User coord: ${euclideanTriangle.UserCoord.coords}
           Current Sat lat/long: ${originalSatLatLong}
           Triangle sat1: ${euclideanTriangle.SatCoord1.coords}
           Triangle sat2: ${euclideanTriangle.SatCoord2.coords}
-          Distance from you to closest point on geodesic: ${closest.previousDistance} km
+          Distance from you to SC1: ${euclideanTriangle.SatCoord1.distance.UserCoord} km
+          Distance from you to SC2: ${euclideanTriangle.SatCoord2.distance.UserCoord} km
+
           Closest Sat lat/long: ${closest.previousCoord[0]} ${closest.previousCoord[1]}
+          Distance from you to closest point on geodesic: ${closest.previousDistance} km
+          Date/Time when at closest point on geodesic: ${closest.time.toString()} 
         `)
       }
       break;
@@ -118,7 +124,8 @@ import * as fs from 'fs';
         const coordNum : number[] = [OH.userCoord[1], OH.userCoord[0]];
         const testData = {
           "type": "FeatureCollection",
-          "features": []
+          "features": [],
+          "satData": OH.satData
         };
         const userFeature : feature = {
           "type": "Feature",
@@ -171,24 +178,28 @@ import * as fs from 'fs';
       OH.setUserCoord([testUserCoord[1], testUserCoord[0]]); // values were swapped for use with geojson.io
       // OH.setSatCoordLocal();
       // const originalSatLatLong = OH.satCoord.slice();
+      //OH.setSatDataLocal(data.satData);
+      OH.satData = testData.satData; // manually set satellite data      
       const orbit = setData(testData.features, true);
       OH.setEuclideanTriangle(orbit);
       const euclideanTriangle : triangle = OH.coordTriangle;
-      const closest = OH.findClosestPointAlongGeodesic2(euclideanTriangle);
+      const closest = OH.getClosestPointAlongGeodesic(euclideanTriangle);
 
       console.log(`
         Triangle sat1: ${euclideanTriangle.SatCoord1.coords}
         Triangle sat2: ${euclideanTriangle.SatCoord2.coords}
         Distance from you to SC1: ${euclideanTriangle.SatCoord1.distance.UserCoord} km
+        Distance from you to SC2: ${euclideanTriangle.SatCoord2.distance.UserCoord} km
         Distance from you to closest point on geodesic: ${closest.previousDistance} km
-        Sat lat/long: ${closest.previousCoord[0]} ${closest.previousCoord[1]}
-      `);
+        Closest: ${JSON.stringify(closest)} 
+        `);
       break;
 
+//        Sat lat/long: ${closest.previousCoord[0]} ${closest.previousCoord[1]}
     case "getSatPropagate":
       await OH.setSatPropagate();
       console.log(`
-        TLE API propogate data: ${OH.satData}
+        TLE API propogate data: ${JSON.stringify(OH.satData)}
       `);
       break;
 
@@ -203,8 +214,8 @@ import * as fs from 'fs';
   }
 
   function setData (data: any[], test: boolean) : {distance: number, order: number, coords: number[]}[] {
-    // pulls in test data, reorgs it a bit and runs some calcs and returns an array of satCoords with distances to the user calculated
-    const orbit = data
+    // pulls in data, reorgs it a bit and runs some calcs and returns an array of satCoords with distances to the user calculated 
+      const orbit = data
       .filter((el: object) => {
         if(test){
           return el['label'] == 'satellite';
@@ -219,7 +230,7 @@ import * as fs from 'fs';
           distance: OH.distanceAtoB,
           order: index,
           coords: OH.satCoord,
-          offsetHrs: el['geometry']['offset']
+          offsetHrs: test ? el['geometry']['offset'] : el['offset']
         }
       });
 

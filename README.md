@@ -67,6 +67,7 @@ This application is written in JS and run in Node, utilizing multiple APIs & lib
   * satellite orbits that will pass 'overhead' in the next 24hrs || the next viewing time || the next 10
   * using mongo to query geospatial data to with in the users location
   * calculate horizon of user, and horizon of satellite, if they intersect then its a worthy candidate
+  * swap out ipinfo network call for geolocation api? https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API/Using_the_Geolocation_API#examples, not sure if it can work on node
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
