@@ -1,4 +1,5 @@
-import { OverHead, triangle } from './handlers/OverHead';
+import { OverHead } from './handlers/OverHead';
+import { triangle } from './interfaces/index';
 import * as testData from './data/test.json';
 import * as fs from 'fs';
 
@@ -22,7 +23,8 @@ import * as fs from 'fs';
     case "getOrbit":
       { // scoping vars to the case not the switch
         await OH.setSatData();
-        const orbit = OH.getOrbitCoords(OH.satData.line2, false);
+        OH.setOrbitCoords(OH.satData.line2, false);
+        const orbit = OH.orbitCoords;
 
         console.log(`
           orbital period (hrs): ${orbit.periodHours}
@@ -37,11 +39,12 @@ import * as fs from 'fs';
     case "getOrbits24hrs":
       {
         await OH.setSatData();
-        const orbit = OH.getOrbitCoords(OH.satData.line2, true);
+        OH.setOrbitCoords(OH.satData.line2, true);
+        const orbit = OH.orbitCoords;
 
         console.log(`
           orbital period (hrs): ${orbit.periodHours}
-          cords: ${orbit.coords}
+          coords: ${JSON.stringify(orbit.coords)}
         `);
       }
       break;
@@ -79,8 +82,8 @@ import * as fs from 'fs';
         await OH.setUserCoord();
         OH.setSatCoordLocal();
         const originalSatLatLong = OH.satCoord.slice();
-        const data = OH.getOrbitCoords(OH.satData.line2, false).coords;
-        const orbit = setData(data, false);
+        OH.setOrbitCoords(OH.satData.line2, false);
+        const orbit = setData(OH.orbitCoords.coords, false);
 
         OH.setEuclideanTriangle(orbit);
         const euclideanTriangle : triangle = OH.coordTriangle;
@@ -120,7 +123,8 @@ import * as fs from 'fs';
         };
         await OH.setUserCoord();
         await OH.setSatData();
-        const orbit = OH.getOrbitCoords(OH.satData.line2, false);
+        OH.setOrbitCoords(OH.satData.line2, false);
+        const orbit = OH.orbitCoords.coords;
         const coordNum : number[] = [OH.userCoord[1], OH.userCoord[0]];
         const testData = {
           "type": "FeatureCollection",
@@ -141,7 +145,7 @@ import * as fs from 'fs';
             "marker-symbol": ""
           }
         }
-        orbit.coords.forEach((coord) => {
+        orbit.forEach((coord) => {
           const coordNum : number[] = [coord['long'], coord['lat']];
           const satFeature : feature = {
             "type": "Feature",

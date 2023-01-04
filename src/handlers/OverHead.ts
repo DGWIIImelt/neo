@@ -1,32 +1,7 @@
 import { TLEapi } from '../api/tle';
 import { UserAddressApi } from '../api/userAdress';
+import { triangle } from '../interfaces/index';
 const satellite = require('satellite.js');
-
-export interface triangle {
-  UserCoord:{
-    coords: number[],
-    distance: {
-      SatCoord1: number,
-      SatCoord2: number
-    }
-  },
-  SatCoord1:{
-    coords: number[],
-    offset: number,
-    distance: {
-      UserCoord: number,
-      SatCoord2: number
-    }
-  },
-  SatCoord2:{
-    coords: number[],
-    offset: number,
-    distance: {
-      SatCoord1: number,
-      UserCoord: number
-    }
-  }
-}
 
 export class OverHead {
   action: string = '';
@@ -34,15 +9,21 @@ export class OverHead {
   query: string = '';
   userCoord: number[] = [null, null];
   satCoord: number[] = [null, null]; // "current" location of satellite
-  coordTriangle: triangle;
+  coordTriangle: triangle; // 3 coords, user and 2 "close" coords on the orbital path TODO: might be able to do away with it
   satData; //TLE data from which all the maths are possible
   orbitCoords: {periodHours: number, coords: object[]}; // array of coordinates along the orbital path
-
+  distanceUserToHorizon: number = undefined;
+  
   constructor (action: string, query: string) {
     this.action = action;
     if(query){
       this.query = query;
     }
+  }
+
+  setDistanceToHorizon (location?) : void {
+   //TODO: horizon is based on sealevel, how to check that? 
+   if(location) console.log('there a location')
   }
 
   setDistance (A? : [], B? : []) : void { // finds distance between two coordinates on a sphere
@@ -166,7 +147,8 @@ export class OverHead {
     this.coordTriangle = triangle;
   }
 
-    setOrbitCoords (tle: string, fullDay: boolean) : void { // get 10 coords evenly spaced along orbit, passed to setEuclideanTriangle
+  setOrbitCoords (tle: string, fullDay: boolean) : void { // get 10 coords evenly spaced along orbit, passed to setEuclideanTriangle
+    // TODO: making this a setter so that I can access the array of coords later on to be passed along with other method return objects
     const coords : object[] = [];
     const line2parts : string[] = tle.split(' ');
     const meanMotion : number = fullDay ? 1 : parseFloat(line2parts[line2parts.length - 1]); // speed for 1 orbit
@@ -178,20 +160,6 @@ export class OverHead {
       coords.push({lat: this.satCoord[0], long: this.satCoord[1], offset });
     }
     this.orbitCoords = {periodHours: orbitalPeriodHrs, coords};
-  }
-
-  getOrbitCoords (tle: string, fullDay: boolean) : {periodHours: number, coords: object[]} { // get 10 coords evenly spaced along orbit, passed to setEuclideanTriangle
-    const coords : object[] = [];
-    const line2parts : string[] = tle.split(' ');
-    const meanMotion : number = fullDay ? 1 : parseFloat(line2parts[line2parts.length - 1]); // speed for 1 orbit
-    const orbitalPeriodHrs : number = (24 / meanMotion) * 100; // time for 1 orbit
-
-    for(let i : number = 0; i < orbitalPeriodHrs; i += (orbitalPeriodHrs/10)){
-      const offset : number = i/100;
-      this.setSatCoordLocal(offset);
-      coords.push({lat: this.satCoord[0], long: this.satCoord[1], offset });
-    }
-    return {periodHours: orbitalPeriodHrs, coords};
   }
 
   getNearestSatOrbitCoords (SCs: object[]) : {SC1: object, SC2: object} {
@@ -270,7 +238,7 @@ export class OverHead {
         previousDistance = currentDistance;
     }
 
-    console.log('coords', this.satData)
+    
     return incrementedCoords.at(-1);
   }
 
